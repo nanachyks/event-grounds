@@ -50,15 +50,17 @@ export default function Navbar() {
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={open ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
           </button>
         </div>
-        {open && (
-          <div className={`sm:hidden pb-4 space-y-2 ${transparent ? "bg-black/60 rounded-b-lg px-2" : ""}`}>
-            <Link href="/grounds" className={`block px-3 py-2 text-sm ${transparent ? "text-white" : "text-gray-600 hover:text-green-700"}`} onClick={() => setOpen(false)}>Browse Grounds</Link>
-            <Link href="/vendor/login" className={`block px-3 py-2 text-sm ${transparent ? "text-white" : "text-gray-600 hover:text-green-700"}`} onClick={() => setOpen(false)}>Vendor</Link>
-            <Link href="/admin/login" className={`block px-3 py-2 text-sm ${transparent ? "text-white" : "text-gray-600 hover:text-green-700"}`} onClick={() => setOpen(false)}>Admin</Link>
-            <Link href="/grounds" className="block px-3 py-2 text-sm bg-green-600 text-white rounded-lg text-center" onClick={() => setOpen(false)}>Book Now</Link>
-          </div>
-        )}
       </div>
+      {open && (
+        <div className={`sm:hidden absolute inset-x-0 top-full px-4 pb-4 pt-2 space-y-2 ${
+          transparent ? "bg-black/80" : "bg-white border-b border-gray-200 shadow-lg"
+        }`}>
+          <Link href="/grounds" className={`block px-3 py-2 text-sm ${transparent ? "text-white" : "text-gray-600 hover:text-green-700"}`} onClick={() => setOpen(false)}>Browse Grounds</Link>
+          <Link href="/vendor/login" className={`block px-3 py-2 text-sm ${transparent ? "text-white" : "text-gray-600 hover:text-green-700"}`} onClick={() => setOpen(false)}>Vendor</Link>
+          <Link href="/admin/login" className={`block px-3 py-2 text-sm ${transparent ? "text-white" : "text-gray-600 hover:text-green-700"}`} onClick={() => setOpen(false)}>Admin</Link>
+          <Link href="/grounds" className="block px-3 py-2 text-sm bg-green-600 text-white rounded-lg text-center" onClick={() => setOpen(false)}>Book Now</Link>
+        </div>
+      )}
     </nav>
   )
 }
