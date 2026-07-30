@@ -9,6 +9,39 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: event_grounds_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_grounds_ci
+      AUTH_SECRET: ci-only-secret-not-used-in-production
+      ADMIN_EMAIL: admin@eventgrounds.com
+      ADMIN_PASSWORD_HASH: "$2b$10$ciDummyHashCiDummyHashCiDummyHa"
+      PAYSTACK_SECRET_KEY: sk_test_ci_dummy
+      PAYSTACK_PUBLIC_KEY: pk_test_ci_dummy
+      NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: pk_test_ci_dummy
+      CLOUDINARY_CLOUD_NAME: ci-dummy
+      CLOUDINARY_API_KEY: ci-dummy
+      CLOUDINARY_API_SECRET: ci-dummy
+      RESEND_API_KEY: re_ci_dummy
+      NEXT_PUBLIC_COMMISSION_RATE: "0.02"
+      COMMISSION_RATE: "0.02"
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      APP_NAME: EventGrounds
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,3 +55,5 @@ jobs:
       - run: npm run lint
       - run: npx tsc --noEmit
       - run: npm test
+      - run: npx prisma db push
+      - run: npm run build
