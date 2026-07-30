@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/admin/grounds", label: "Grounds", icon: "⌂" },
   { href: "/admin/bookings", label: "Bookings", icon: "☷" },
   { href: "/admin/vendors", label: "Vendors", icon: "▤" },
+  { href: "/admin/audit-log", label: "Audit Log", icon: "🕘" },
 ]
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {

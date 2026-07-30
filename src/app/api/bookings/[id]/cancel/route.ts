@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { refundPaystackPayment } from "@/lib/paystack"
 import { requireVendorOrAdmin } from "@/lib/auth-helpers"
 import { logError } from "@/lib/logger"
+import { logAudit } from "@/lib/audit-log"
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -51,6 +52,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await prisma.booking.update({
       where: { id },
       data: { status: "cancelled" },
+    })
+
+    await logAudit({
+      actor: user,
+      action: "booking.cancel",
+      targetType: "booking",
+      targetId: id,
+      metadata: { customerName: booking.customerName, refunded },
     })
 
     return NextResponse.json({ success: true, refunded })

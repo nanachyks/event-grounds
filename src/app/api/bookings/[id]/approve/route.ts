@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid"
 import { initializePaystackPayment } from "@/lib/paystack"
 import { requireVendorOrAdmin } from "@/lib/auth-helpers"
 import { logError } from "@/lib/logger"
+import { logAudit } from "@/lib/audit-log"
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -68,6 +69,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         vendorNet,
         status: "pending",
       },
+    })
+
+    await logAudit({
+      actor: user,
+      action: "booking.approve",
+      targetType: "booking",
+      targetId: id,
+      metadata: { customerName: booking.customerName, groundName: booking.ground.name, amount },
     })
 
     return NextResponse.json({

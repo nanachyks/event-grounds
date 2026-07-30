@@ -106,3 +106,15 @@ model Payment {
   updatedAt      DateTime @updatedAt
   booking        Booking  @relation(fields: [bookingId], references: [id])
 }
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorType  String   // "admin" | "vendor"
+  actorId    String
+  actorName  String
+  action     String   // e.g. "ground.approve", "ground.reject", "booking.approve", "booking.cancel", "ground.delete"
+  targetType String   // "ground" | "booking"
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
