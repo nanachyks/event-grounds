@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Vendor {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  phone            String
+  password         String
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+  commissionRate   Float     @default(0.02)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  grounds          Ground[]
+}
+
+model Ground {
+  id                      String   @id @default(cuid())
+  vendorId                String
+  name                    String
+  description             String
+  location                String
+  category                String?
+  capacity                Int
+  price                   Float
+  images                  String[]
+  videoUrl                String?
+  amenities               String[]
+  status                  String   @default("active")
+  pricingType             String   @default("daily")
+  hourlyRate              Float?
+  openingHours            Json?
+  cancellationPolicy      String   @default("flexible")
+  cancellationNoticeHours Int      @default(48)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  vendor                  Vendor   @relation(fields: [vendorId], references: [id])
+  bookings                Booking[]
+  spaces                  Space[]
+  reviews                 Review[]
+}
+
+model Space {
+  id          String    @id @default(cuid())
+  groundId    String
+  name        String
+  capacity    Int?
+  pricingType String    @default("daily")
+  dailyRate   Float?
+  hourlyRate  Float?
+  images      String[]
+  status      String    @default("active")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  ground      Ground    @relation(fields: [groundId], references: [id])
+  bookings    Booking[]
+}
+
+model Booking {
+  id            String   @id @default(cuid())
+  groundId      String
+  spaceId       String?
+  customerName  String
+  customerEmail String
+  customerPhone String
+  startDate     DateTime
+  endDate       DateTime
+  message       String?
+  status        String   @default("pending")
+  amount        Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  ground        Ground   @relation(fields: [groundId], references: [id])
+  space         Space?   @relation(fields: [spaceId], references: [id])
+  payment       Payment?
+  review        Review?
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  bookingId    String   @unique
+  groundId     String
+  rating       Int
+  comment      String?
+  customerName String
+  createdAt    DateTime @default(now())
+  booking      Booking  @relation(fields: [bookingId], references: [id])
+  ground       Ground   @relation(fields: [groundId], references: [id])
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  bookingId      String   @unique
+  paystackRef    String   @unique
+  amount         Float
+  commission     Float
+  vendorNet      Float
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  booking        Booking  @relation(fields: [bookingId], references: [id])
+}
