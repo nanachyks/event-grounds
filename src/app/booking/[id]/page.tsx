@@ -5,12 +5,21 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import ReviewForm from "@/components/grounds/review-form"
 import { buildWhatsAppLink } from "@/lib/whatsapp"
+import { verifyAndFinalizePayment } from "@/lib/payment-verification"
 
 export const dynamic = "force-dynamic"
 
-export default async function BookingStatusPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BookingStatusPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ reference?: string }>
+}) {
   const { id } = await params
-  const booking = await prisma.booking.findUnique({
+  const { reference } = await searchParams
+
+  let booking = await prisma.booking.findUnique({
     where: { id },
     include: {
       ground: { include: { vendor: true } },
@@ -18,6 +27,21 @@ export default async function BookingStatusPage({ params }: { params: Promise<{ 
       review: true,
     },
   })
+
+  let verificationFailed = false
+
+  if (booking && reference && booking.status === "approved" && booking.payment?.paystackRef === reference) {
+    const result = await verifyAndFinalizePayment(reference)
+    verificationFailed = !result.ok
+    booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        ground: { include: { vendor: true } },
+        payment: true,
+        review: true,
+      },
+    })
+  }
 
   if (!booking) {
     return (
@@ -32,6 +56,11 @@ export default async function BookingStatusPage({ params }: { params: Promise<{ 
 
   return (
     <div className="max-w-lg mx-auto px-4 py-16">
+      {verificationFailed && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg px-4 py-3 mb-6">
+          We couldn&apos;t confirm your payment yet. If you completed checkout, this can take a moment — refresh this page, or message the host on WhatsApp below.
+        </div>
+      )}
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center justify-between">

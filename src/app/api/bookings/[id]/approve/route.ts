@@ -37,10 +37,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const commission = amount * commissionRate
     const vendorNet = amount - commission
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
     const paystackResponse = await initializePaystackPayment({
       email: booking.customerEmail,
       amount,
       reference,
+      callbackUrl: `${appUrl}/booking/${booking.id}?reference=${reference}`,
       metadata: {
         bookingId: booking.id,
         groundName: booking.ground.name,
