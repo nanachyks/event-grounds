@@ -1,3 +1,7 @@
+import { Ratelimit } from "@upstash/ratelimit"
+import { Redis } from "@upstash/redis"
+import { logError } from "@/lib/logger"
+
 type Bucket = { count: number; resetAt: number }
 
 const buckets = new Map<string, Bucket>()
@@ -11,6 +15,11 @@ const cleanupInterval = setInterval(() => {
 }, 5 * 60 * 1000)
 cleanupInterval.unref?.()
 
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+    : null
+
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for")
   if (forwarded) return forwarded.split(",")[0].trim()
@@ -19,13 +28,7 @@ export function getClientIp(request: Request): string {
   return "unknown"
 }
 
-/**
- * Simple fixed-window rate limiter, in-memory. Fine for a single Node
- * process; on a multi-instance/serverless deployment each instance has its
- * own counters, so this only provides a soft ceiling, not a hard global one
- * - swap for Redis/Upstash if that matters for your deployment.
- */
-export function rateLimit(key: string, limit: number, windowMs: number): { allowed: boolean; retryAfterSeconds: number } {
+function rateLimitMemory(key: string, limit: number, windowMs: number): { allowed: boolean; retryAfterSeconds: number } {
   const now = Date.now()
   const bucket = buckets.get(key)
 
@@ -40,4 +43,37 @@ export function rateLimit(key: string, limit: number, windowMs: number): { allow
 
   bucket.count++
   return { allowed: true, retryAfterSeconds: 0 }
+}
+
+async function rateLimitRedis(key: string, limit: number, windowMs: number): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  const limiter = new Ratelimit({
+    redis: redis!,
+    limiter: Ratelimit.fixedWindow(limit, `${Math.max(1, Math.ceil(windowMs / 1000))} s`),
+    prefix: "eventgrounds",
+  })
+  const result = await limiter.limit(key)
+  return {
+    allowed: result.success,
+    retryAfterSeconds: result.success ? 0 : Math.max(0, Math.ceil((result.reset - Date.now()) / 1000)),
+  }
+}
+
+/**
+ * Fixed-window rate limiter. Backed by Upstash Redis when
+ * UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are set, so limits hold
+ * across every instance of a multi-instance/serverless deployment. Falls
+ * back to an in-memory counter (this process only) when those aren't
+ * configured, or if Redis is unreachable - a soft ceiling rather than no
+ * limiter at all, so a Redis outage can't be used to bypass rate limits by
+ * accident, but also can't take down the routes that depend on this.
+ */
+export async function rateLimit(key: string, limit: number, windowMs: number): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  if (redis) {
+    try {
+      return await rateLimitRedis(key, limit, windowMs)
+    } catch (error) {
+      logError("rate-limit.redis", error, { key })
+    }
+  }
+  return rateLimitMemory(key, limit, windowMs)
 }

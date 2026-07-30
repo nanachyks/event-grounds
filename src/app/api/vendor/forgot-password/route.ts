@@ -9,7 +9,7 @@ const GENERIC_MESSAGE = "If an account exists with that email, a password reset 
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request)
-  const { allowed, retryAfterSeconds } = rateLimit(`forgot-password:${ip}`, 5, 60 * 60 * 1000)
+  const { allowed, retryAfterSeconds } = await rateLimit(`forgot-password:${ip}`, 5, 60 * 60 * 1000)
   if (!allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

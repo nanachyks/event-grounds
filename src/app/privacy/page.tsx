@@ -38,8 +38,8 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-green-700 mb-2">6. Cookies</h2>
-          <p>EventGrounds uses only the minimum session cookies required to keep you signed in to your Vendor or Admin account. We do not use third-party advertising or tracking cookies.</p>
+          <h2 className="text-xl font-semibold text-green-700 mb-2">6. Cookies &amp; Analytics</h2>
+          <p>EventGrounds uses only the minimum session cookies required to keep you signed in to your Vendor or Admin account. We do not use third-party advertising or tracking cookies. We use Plausible Analytics to understand overall site traffic - it does not use cookies and does not collect or store any personal or cross-site identifying information.</p>
         </section>
 
         <section>

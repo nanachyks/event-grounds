@@ -5,9 +5,9 @@ import { authConfig } from "@/auth.config"
 import { prisma } from "@/lib/prisma"
 import { getClientIp, rateLimit } from "@/lib/rate-limit"
 
-function checkLoginRateLimit(providerId: string, email: string, request?: Request) {
+async function checkLoginRateLimit(providerId: string, email: string, request?: Request) {
   const ip = request ? getClientIp(request) : "unknown"
-  const { allowed } = rateLimit(`login:${providerId}:${email.toLowerCase()}:${ip}`, 10, 15 * 60 * 1000)
+  const { allowed } = await rateLimit(`login:${providerId}:${email.toLowerCase()}:${ip}`, 10, 15 * 60 * 1000)
   return allowed
 }
 
@@ -25,7 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials?.email as string | undefined
         const password = credentials?.password as string | undefined
         if (!email || !password) return null
-        if (!checkLoginRateLimit("admin", email, request)) return null
+        if (!(await checkLoginRateLimit("admin", email, request))) return null
 
         const adminEmail = process.env.ADMIN_EMAIL || "admin@eventgrounds.com"
         const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
@@ -48,7 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials?.email as string | undefined
         const password = credentials?.password as string | undefined
         if (!email || !password) return null
-        if (!checkLoginRateLimit("vendor", email, request)) return null
+        if (!(await checkLoginRateLimit("vendor", email, request))) return null
 
         const vendor = await prisma.vendor.findUnique({ where: { email } })
         if (!vendor) return null

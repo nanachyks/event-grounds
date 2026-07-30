@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request)
-    const { allowed, retryAfterSeconds } = rateLimit(`bookings:${ip}`, 10, 60 * 60 * 1000)
+    const { allowed, retryAfterSeconds } = await rateLimit(`bookings:${ip}`, 10, 60 * 60 * 1000)
     if (!allowed) {
       return NextResponse.json(
         { error: "Too many booking attempts. Please try again later." },

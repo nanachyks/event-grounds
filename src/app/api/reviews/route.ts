@@ -6,7 +6,7 @@ import { logError } from "@/lib/logger"
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request)
-    const { allowed, retryAfterSeconds } = rateLimit(`reviews:${ip}`, 10, 60 * 60 * 1000)
+    const { allowed, retryAfterSeconds } = await rateLimit(`reviews:${ip}`, 10, 60 * 60 * 1000)
     if (!allowed) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },

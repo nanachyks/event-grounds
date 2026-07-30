@@ -6,35 +6,35 @@ describe("rateLimit", () => {
     vi.useRealTimers()
   })
 
-  it("allows requests up to the limit, then blocks", () => {
+  it("allows requests up to the limit, then blocks", async () => {
     const key = `test-${Math.random()}`
-    expect(rateLimit(key, 2, 60_000)).toEqual({ allowed: true, retryAfterSeconds: 0 })
-    expect(rateLimit(key, 2, 60_000)).toEqual({ allowed: true, retryAfterSeconds: 0 })
+    expect(await rateLimit(key, 2, 60_000)).toEqual({ allowed: true, retryAfterSeconds: 0 })
+    expect(await rateLimit(key, 2, 60_000)).toEqual({ allowed: true, retryAfterSeconds: 0 })
 
-    const third = rateLimit(key, 2, 60_000)
+    const third = await rateLimit(key, 2, 60_000)
     expect(third.allowed).toBe(false)
     expect(third.retryAfterSeconds).toBeGreaterThan(0)
   })
 
-  it("resets the count once the window has passed", () => {
+  it("resets the count once the window has passed", async () => {
     vi.useFakeTimers()
     const key = `test-${Math.random()}`
 
-    expect(rateLimit(key, 1, 1000).allowed).toBe(true)
-    expect(rateLimit(key, 1, 1000).allowed).toBe(false)
+    expect((await rateLimit(key, 1, 1000)).allowed).toBe(true)
+    expect((await rateLimit(key, 1, 1000)).allowed).toBe(false)
 
     vi.advanceTimersByTime(1001)
 
-    expect(rateLimit(key, 1, 1000).allowed).toBe(true)
+    expect((await rateLimit(key, 1, 1000)).allowed).toBe(true)
   })
 
-  it("tracks separate keys independently", () => {
+  it("tracks separate keys independently", async () => {
     const keyA = `a-${Math.random()}`
     const keyB = `b-${Math.random()}`
 
-    expect(rateLimit(keyA, 1, 60_000).allowed).toBe(true)
-    expect(rateLimit(keyA, 1, 60_000).allowed).toBe(false)
-    expect(rateLimit(keyB, 1, 60_000).allowed).toBe(true)
+    expect((await rateLimit(keyA, 1, 60_000)).allowed).toBe(true)
+    expect((await rateLimit(keyA, 1, 60_000)).allowed).toBe(false)
+    expect((await rateLimit(keyB, 1, 60_000)).allowed).toBe(true)
   })
 })
 
